@@ -1,12 +1,11 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button'
 import { DrawingUtils, FaceLandmarker, FaceLandmarkerResult, FilesetResolver, HandLandmarker, HandLandmarkerResult } from '@mediapipe/tasks-vision'
 import { HAND_CONNECTIONS } from '@mediapipe/hands'
 import { FACEMESH_CONTOURS } from '@mediapipe/face_mesh'
 
 @Component({
   selector: 'app-video',
-  imports: [MatButtonModule],
+  imports: [],
   templateUrl: './video.component.html',
   styleUrl: './video.component.scss'
 })
