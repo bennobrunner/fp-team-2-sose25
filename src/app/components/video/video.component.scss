@@ -1,0 +1,28 @@
+.canvas {
+  z-index: 1;
+  position: absolute;
+  pointer-events: none;
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+  -moz-transform: rotateY(180deg);
+}
+
+.videoBlock {
+  clear: both;
+  display: block;
+  transform: rotateY(180deg);
+}
+
+.content {
+  display: grid;
+  align-items: center;
+}
+
+.row {
+  margin: auto;
+  grid-row: auto;
+}
+
+.button {
+  width: fit-content;
+}
