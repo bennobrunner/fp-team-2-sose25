@@ -1,3 +1,6 @@
-data/
+data/videos
+data/test
+data/train
+data/val
 .venv/
 __pycache__/
