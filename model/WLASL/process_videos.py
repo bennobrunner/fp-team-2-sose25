@@ -1,4 +1,4 @@
-from constants import VIDEOS_DIR, PROCESSED_VIDEOS_DIR, WIDTH, HEIGHT, CLASSES
+from constants import DATA_DIR, VIDEOS_DIR, TRAIN_PATH, VAL_PATH, TEST_PATH, WIDTH, HEIGHT, CLASSES
 
 import pathlib
 import json
@@ -101,35 +101,50 @@ def process_and_resize_video(video_info, output_path):
         print(f"Error processing {video_info['path']}: {str(e)}")
         return False
 
+def validate_entry(entry):
+    splits = []
+    for inst in entry["instances"]:
+        path = pathlib.Path(VIDEOS_DIR / f"{inst["video_id"]}.mp4")
+        if path.exists():
+            splits.append(inst["split"])
+    
+    required_splits = {"train", "test", "val"}
+    return required_splits.issubset(set(splits))
+
 
 def main():
     with open('./data/WLASL_v0.3.json', 'r') as file:
         data = json.load(file)
     
+    class_count = 0
     videos = {}
     for entry in data:
-        if entry["gloss"] in CLASSES:
+        if (CLASSES == -1 or class_count < CLASSES) and validate_entry(entry):
             for inst in entry["instances"]:
                 path = pathlib.Path(VIDEOS_DIR / f"{inst["video_id"]}.mp4")
                 if path.exists():
                     videos[inst["video_id"]] = {
                     "path": path,
+                    "split": inst["split"],
+                    "gloss": entry["gloss"],
                     "bbox": inst["bbox"],
                     "fps": inst["fps"],
                     "frame_start": inst["frame_start"],
                     "frame_end": inst["frame_end"],
                     }
-
-    print(f"Found {len(videos)} videos to process")
+                
+            class_count += 1
     
     # Process each video
     successful = 0
     failed = 0
 
     for video_id, video_info in tqdm(videos.items(), desc="Processing videos"):
+        path = DATA_DIR / f"{video_info["split"]}/{video_info["gloss"]}"
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
         # Create output filename identical to original
-        output_filename = f"{video_id}.mp4"
-        output_path = PROCESSED_VIDEOS_DIR / output_filename
+        output_filename = f"{video_info["gloss"]}_{video_info["split"]}_{video_id}.mp4"
+        output_path = path / output_filename
         
         # Skip if already processed
         if output_path.exists():
@@ -143,9 +158,9 @@ def main():
             failed += 1
     
     print(f"\nProcessing complete!")
+    print(f"Classes processed: {class_count}")
     print(f"Successfully processed: {successful} videos")
     print(f"Failed to process: {failed} videos")
-    print(f"Processed videos saved to: {PROCESSED_VIDEOS_DIR}")
 
 
 if __name__ == "__main__":
