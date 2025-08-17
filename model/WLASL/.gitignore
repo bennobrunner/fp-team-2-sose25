@@ -4,3 +4,6 @@ data/train
 data/val
 .venv/
 __pycache__/
+
+plot.png
+confusion_matrix.png
