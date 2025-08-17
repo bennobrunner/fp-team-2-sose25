@@ -22,6 +22,8 @@ export class VideoComponent implements OnInit {
 
   handLandmarker?: HandLandmarker;
   faceLandmarker?: FaceLandmarker
+  currentSubtitle = "";
+  private subtitles = ["Zwiebel", "Käse", "Schinken", "Salami", "Tomate", "Gurke", "Paprika", "Ei", "Thunfisch", "Sardellen"];
 
   async ngOnInit(): Promise<void> {
     console.log(await navigator.mediaDevices.enumerateDevices());
@@ -52,11 +54,13 @@ export class VideoComponent implements OnInit {
   }
 
   async enableCam() {
+    setInterval(() => {
+        this.currentSubtitle = this.currentSubtitle.concat(" ", this.subtitles[Math.floor(Math.random() * this.subtitles.length)]);
+      }
+      , 5000)
+
     const constraints: MediaStreamConstraints = {
-      video: {
-        height: 1080,
-        width: 1920
-      },
+      video: true,
     };
 
     // Activate the webcam stream.
