@@ -1,0 +1,13 @@
+<div class="box">
+  <div class="columns">
+    <div class="column is-6">
+      <h4 class="subtitle">The letter you are trying to sign.</h4>
+    </div>
+  </div>
+  <div class="columns is-centered">
+    <div class="column">
+      <img [alt]="letterToSign()?.character?.character" [src]="'letters/' + letterToSign()?.character?.character + '.jpg'" />
+      <p>{{letterToSign()?.character?.character}}</p>
+    </div>
+  </div>
+</div>

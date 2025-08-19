@@ -1,0 +1,21 @@
+<div class="mt-5">
+  <div class="box">
+    <div class="columns">
+      <div class="column">
+        <h4 class="subtitle">The letter we recognized.</h4>
+      </div>
+    </div>
+    <div class="columns is-centered">
+      <div class="column">
+        <p>{{letterRecognized()?.character?.character}} A</p>
+      </div>
+    </div>
+    <hr>
+    <h5>Your current streak!</h5>
+    <p>
+      @for (letter of streak; track letter.character) {
+        {{letter.character}}
+      }
+    </p>
+  </div>
+</div>

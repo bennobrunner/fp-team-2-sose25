@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import {Component, ElementRef, OnInit, output, ViewChild} from '@angular/core';
 import { DrawingUtils, FaceLandmarker, FaceLandmarkerResult, FilesetResolver, HandLandmarker, HandLandmarkerResult } from '@mediapipe/tasks-vision'
 import { HAND_CONNECTIONS } from '@mediapipe/hands'
 import { FACEMESH_CONTOURS } from '@mediapipe/face_mesh'
@@ -16,6 +16,9 @@ export class VideoComponent implements OnInit {
   @ViewChild('outputCanvas')
   outCanvas!: ElementRef<HTMLCanvasElement>
   canvasContext!: CanvasRenderingContext2D;
+
+  handLandmarkResults  = output<HandLandmarkerResult>();
+  faceLandmarkResults = output<FaceLandmarkerResult>();
 
   runningMode = "VIDEO";
   webcamRunning = true;
@@ -94,6 +97,7 @@ export class VideoComponent implements OnInit {
 
 
       if (handResults.landmarks) {
+        this.handLandmarkResults.emit(handResults);
         for (const landmarks of handResults.landmarks) {
           console.log(landmarks);
           drawingUtils.drawConnectors(landmarks, handConnections, {
@@ -104,6 +108,7 @@ export class VideoComponent implements OnInit {
         }
       }
       if (faceResults.faceLandmarks) {
+        this.faceLandmarkResults.emit(faceResults);
         for (const landmarks of faceResults.faceLandmarks) {
           drawingUtils.drawConnectors(landmarks, faceConnections, {
             color: "#00FF00",

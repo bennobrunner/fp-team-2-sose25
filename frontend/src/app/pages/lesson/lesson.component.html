@@ -1,0 +1,15 @@
+<div class="content m-5">
+  <div class="has-text-centered">
+    <h1 class="title">Learning ASL</h1>
+    <h2 class="subtitle">Sign the letter shown in the upper right image. </h2>
+  </div>
+  <div class="columns">
+    <div class="column">
+      <app-video (handLandmarkResults)="checkResult($event)"></app-video>
+    </div>
+    <div class="column">
+      <app-actual [letterToSign]="currentLesson"></app-actual>
+      <app-recognized></app-recognized>
+    </div>
+  </div>
+</div>
