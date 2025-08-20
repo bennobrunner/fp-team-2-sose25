@@ -28,8 +28,7 @@ export class LessonComponent {
   }
 
   checkResult(result: HandLandmarkerResult) {
-    const request = result.landmarks.flat()
-    console.log(request);
+    const request = result.landmarks.map(landmarks => landmarks.map(landmark => ([landmark.x, landmark.y, landmark.z]))).flat().flat()
 
     this.http.post("/api/fingers", {
       landmarks: request

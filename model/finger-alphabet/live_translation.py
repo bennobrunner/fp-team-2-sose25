@@ -38,7 +38,8 @@ def run_live_translation():
         if res.multi_hand_landmarks:
             lm = res.multi_hand_landmarks[0].landmark
             pts = np.array([[p.x, p.y, p.z] for p in lm], dtype=np.float32)
-            pts -= pts[0]; pts /= np.linalg.norm(pts[9]) + 1e-6
+            pts -= pts[0]
+            pts /= np.linalg.norm(pts[9]) + 1e-6
             feats = pts.flatten()
             probs = clf.predict_proba([feats])[0]
             idx = int(np.argmax(probs))

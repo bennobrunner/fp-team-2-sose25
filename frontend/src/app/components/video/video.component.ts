@@ -40,7 +40,7 @@ export class VideoComponent implements OnInit {
         delegate: "GPU"
       },
       runningMode: 'VIDEO',
-      numHands: 2
+      numHands: 1
     });
     this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
       baseOptions: {
