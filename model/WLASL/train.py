@@ -24,7 +24,7 @@ N_FRAMES = 30
 FRAME_STEP = 1
 
 BATCH_SIZE = 2
-EPOCHS = 100
+EPOCHS = 5
 
 def get_class(fname):
   """ Retrieve the name of the class given a filename.
@@ -200,6 +200,7 @@ results = model.fit(train_ds,
                     epochs=EPOCHS,
                     validation_freq=1,
                     verbose=1)
+model.save('model.h5')
 
 def plot_history(history):
   """

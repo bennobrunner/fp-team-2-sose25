@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {VideoComponent} from '../../components/video/video.component';
 import {RecognizedComponent} from '../../components/recognized/recognized.component';
 import {ActualComponent} from '../../components/actual/actual.component';
 import {HandLandmarkerResult} from '@mediapipe/tasks-vision';
 import {Lesson} from '../../model/letter';
+import {HttpClient} from '@angular/common/http';
 
 @Component({
   selector: 'app-lesson',
@@ -17,6 +18,8 @@ import {Lesson} from '../../model/letter';
 })
 export class LessonComponent {
 
+  private http = inject(HttpClient)
+
   currentLesson: Lesson = {
     character: {
       character: 'E',
@@ -25,8 +28,11 @@ export class LessonComponent {
   }
 
   checkResult(result: HandLandmarkerResult) {
-    if (result.landmarks === this.currentLesson.character.landmarks) {
+    const request = result.landmarks.flat()
+    console.log(request);
 
-    }
+    this.http.post("/api/fingers", {
+      landmarks: request
+    }).subscribe()
   }
 }
