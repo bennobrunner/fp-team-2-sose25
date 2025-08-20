@@ -1,5 +1,5 @@
 import {Component, input} from '@angular/core';
-import {Lesson, Letter} from '../../model/letter';
+import {Letter} from '../../model/letter';
 
 @Component({
   selector: 'app-recognized',
@@ -8,7 +8,7 @@ import {Lesson, Letter} from '../../model/letter';
   styleUrl: './recognized.component.scss'
 })
 export class RecognizedComponent {
-  letterRecognized = input<Lesson>()
+  letterRecognized = input<string>()
 
   streak: Letter[] = [{character: "O", landmarks: []}, {character: "O", landmarks: []}, {character: "E", landmarks: []}, {character: "E", landmarks: []}, {character: "A", landmarks: []}, {character: "E", landmarks: []}]
 

@@ -23,7 +23,7 @@ async def fingers(request):
     char, prob = labels[idx], probabilities[idx]
 
     print(f"Predicted: {char}, Probability: {prob:.3f}")
-    return json({"status": "success", "message": "Landmarks received!"})
+    return json({"character": char})
 
 def __main__():
     app.run(host="localhost", port=8000)

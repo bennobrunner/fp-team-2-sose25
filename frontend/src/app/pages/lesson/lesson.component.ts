@@ -20,6 +20,8 @@ export class LessonComponent {
 
   private http = inject(HttpClient)
 
+  recognizedCharacter = '';
+
   currentLesson: Lesson = {
     character: {
       character: 'E',
@@ -30,8 +32,14 @@ export class LessonComponent {
   checkResult(result: HandLandmarkerResult) {
     const request = result.landmarks.map(landmarks => landmarks.map(landmark => ([landmark.x, landmark.y, landmark.z]))).flat().flat()
 
-    this.http.post("/api/fingers", {
+    this.http.post<FingerAlphabetResponse>("/api/fingers", {
       landmarks: request
-    }).subscribe()
+    }).subscribe(res => {
+      this.recognizedCharacter = res.character
+    })
   }
+}
+
+interface FingerAlphabetResponse {
+  character: string;
 }
