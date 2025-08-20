@@ -18,7 +18,6 @@ import {Lesson} from '../../model/letter';
 export class LessonComponent {
 
   currentLesson: Lesson = {
-    lessonImage: "TEST",
     character: {
       character: 'E',
       landmarks: []

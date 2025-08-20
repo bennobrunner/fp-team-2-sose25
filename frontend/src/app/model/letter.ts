@@ -10,5 +10,4 @@ export type LessonLetter = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' |
 
 export interface Lesson {
   character: Letter;
-  lessonImage: string
 }
