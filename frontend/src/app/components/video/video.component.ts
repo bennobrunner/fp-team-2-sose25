@@ -25,8 +25,6 @@ export class VideoComponent implements OnInit {
 
   handLandmarker?: HandLandmarker;
   faceLandmarker?: FaceLandmarker
-  currentSubtitle = "";
-  private subtitles = ["Zwiebel", "Käse", "Schinken", "Salami", "Tomate", "Gurke", "Paprika", "Ei", "Thunfisch", "Sardellen"];
 
   async ngOnInit(): Promise<void> {
     console.log(await navigator.mediaDevices.enumerateDevices());
@@ -57,11 +55,6 @@ export class VideoComponent implements OnInit {
   }
 
   async enableCam() {
-    setInterval(() => {
-        this.currentSubtitle = this.currentSubtitle.concat(" ", this.subtitles[Math.floor(Math.random() * this.subtitles.length)]);
-      }
-      , 5000)
-
     const constraints: MediaStreamConstraints = {
       video: true,
     };
@@ -95,7 +88,6 @@ export class VideoComponent implements OnInit {
       const handConnections = HAND_CONNECTIONS.map((val: number[]) => { return { start: val[0], end: val[1] } })
       const faceConnections = FACEMESH_CONTOURS.map((val: number[]) => { return { start: val[0], end: val[1] } })
 
-
       if (handResults.landmarks) {
         this.handLandmarkResults.emit(handResults);
         for (const landmarks of handResults.landmarks) {
@@ -121,7 +113,6 @@ export class VideoComponent implements OnInit {
       this.canvasContext?.restore();
       window.requestAnimationFrame(predictWebcam);
     }
-
   }
 }
 
