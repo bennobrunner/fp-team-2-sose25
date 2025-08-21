@@ -8,8 +8,8 @@
       <app-video (handLandmarkResults)="checkResult($event)"></app-video>
     </div>
     <div class="column">
-      <app-actual [letterToSign]="currentLesson"></app-actual>
-      <app-recognized [letterRecognized]="recognizedCharacter"></app-recognized>
+      <app-actual (skip)="skipLesson()" [letterToSign]="currentLesson"></app-actual>
+      <app-recognized [streak]="streak" [letterRecognized]="recognizedCharacter"></app-recognized>
     </div>
   </div>
 </div>

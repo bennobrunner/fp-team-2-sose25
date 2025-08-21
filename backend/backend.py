@@ -1,5 +1,6 @@
+import joblib
+import numpy as np
 from sanic import Sanic, json
-import cv2, time, joblib, numpy as np
 
 app = Sanic("TestApp")
 model = joblib.load("../model/finger-alphabet/asl_svm.joblib")
@@ -15,6 +16,12 @@ async def fingers(request):
     landmarks = data.get("landmarks")
     landmarks = np.array(landmarks, dtype=np.float32)
 
+    if len(landmarks) == 0:
+        return json({"character": ""}, status=200)
+
+    landmarks -= landmarks[0]
+    landmarks /= np.linalg.norm(landmarks[9]) + 1e-6
+
     landmarks = landmarks.reshape((1, -1))
 
     probabilities = model.predict_proba(landmarks)[0]
@@ -23,6 +30,10 @@ async def fingers(request):
     char, prob = labels[idx], probabilities[idx]
 
     print(f"Predicted: {char}, Probability: {prob:.3f}")
+
+    if prob < 0.7:
+        char = ""
+
     return json({"character": char})
 
 def __main__():

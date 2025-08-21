@@ -1,15 +1,16 @@
-import {Component, input} from '@angular/core';
-import {Lesson} from '../../model/letter';
-import {NgOptimizedImage} from '@angular/common';
+import {Component, input, output} from '@angular/core';
 
 @Component({
   selector: 'app-actual',
-  imports: [
-    NgOptimizedImage
-  ],
+  imports: [],
   templateUrl: './actual.component.html',
   styleUrl: './actual.component.scss'
 })
 export class ActualComponent {
-  letterToSign = input<Lesson>()
+  letterToSign = input<string>()
+  skip = output()
+
+  skipLesson() {
+    this.skip.emit()
+  }
 }

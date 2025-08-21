@@ -6,8 +6,9 @@
   </div>
   <div class="columns is-centered">
     <div class="column">
-      <img [alt]="letterToSign()?.character?.character" [src]="'letters/' + letterToSign()?.character?.character + '.jpg'" />
-      <p>{{letterToSign()?.character?.character}}</p>
+      <img [alt]="letterToSign()" [src]="'letters/' + letterToSign() + '.jpg'" />
+      <p>{{letterToSign()}}</p>
     </div>
   </div>
+  <button (click)="skip.emit()" class="button">Skip</button>
 </div>

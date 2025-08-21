@@ -1,5 +1,4 @@
 import {Component, input} from '@angular/core';
-import {Letter} from '../../model/letter';
 
 @Component({
   selector: 'app-recognized',
@@ -9,10 +8,5 @@ import {Letter} from '../../model/letter';
 })
 export class RecognizedComponent {
   letterRecognized = input<string>()
-
-  streak: Letter[] = [{character: "O", landmarks: []}, {character: "O", landmarks: []}, {character: "E", landmarks: []}, {character: "E", landmarks: []}, {character: "A", landmarks: []}, {character: "E", landmarks: []}]
-
-  addToStreak(letter: Letter) {
-    this.streak.push(letter);
-  }
+  streak = input<string[]>([])
 }

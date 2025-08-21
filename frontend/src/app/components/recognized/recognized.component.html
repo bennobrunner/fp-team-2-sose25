@@ -13,9 +13,7 @@
     <hr>
     <h5>Your current streak!</h5>
     <p>
-      @for (letter of streak; track letter.character) {
-        {{letter.character}}
-      }
+      {{streak().join(' ')}}
     </p>
   </div>
 </div>
