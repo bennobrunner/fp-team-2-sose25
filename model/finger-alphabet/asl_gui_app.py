@@ -37,7 +37,7 @@ show_confidence_info = False
 current_candidate = None
 candidate_start_time = 0
 
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)  # macOS: CAP_AVFOUNDATION, Windows: CAP_DSHOW
 
 clf = None
 labels = []
