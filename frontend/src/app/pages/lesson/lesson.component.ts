@@ -28,7 +28,8 @@ export class LessonComponent {
     const request = result.landmarks.map(landmarks => landmarks.map(landmark => ([landmark.x, landmark.y, landmark.z]))).flat()
 
     this.http.post<FingerAlphabetResponse>("/api/fingers", {
-      landmarks: request
+      landmarks: request,
+      handedness: result.handedness[0][0].categoryName
     }).subscribe(res => {
       if (res.character !== "")
       this.recognizedCharacter = res.character

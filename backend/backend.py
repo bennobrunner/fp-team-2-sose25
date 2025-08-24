@@ -13,27 +13,32 @@ async def moin(request):
 @app.post("/fingers")
 async def fingers(request):
     data = request.json
-    landmarks = data.get("landmarks")
-    landmarks = np.array(landmarks, dtype=np.float32)
-
+    landmarks = np.array(data.get("landmarks"), dtype=np.float32)
+    handedness = data.get("handedness", "Left")  # Frontend soll 'Left'/'Right' mitsenden
+    
+    print(handedness)
+ 
     if len(landmarks) == 0:
         return json({"character": ""}, status=200)
-
+ 
     landmarks -= landmarks[0]
     landmarks /= np.linalg.norm(landmarks[9]) + 1e-6
-
+ 
+  
+    if handedness == "Right":
+        landmarks[:, 0] *= -1.0
+ 
     landmarks = landmarks.reshape((1, -1))
-
+ 
     probabilities = model.predict_proba(landmarks)[0]
-
     idx = int(np.argmax(probabilities))
     char, prob = labels[idx], probabilities[idx]
-
+ 
     print(f"Predicted: {char}, Probability: {prob:.3f}")
-
+ 
     if prob < 0.7:
         char = ""
-
+ 
     return json({"character": char})
 
 def __main__():
