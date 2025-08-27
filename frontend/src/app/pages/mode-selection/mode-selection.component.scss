@@ -1,0 +1,19 @@
+.no-decoration {
+  text-decoration: none;
+  color: var(--bulma-text);
+  &.inverted {
+    color: var(--bulma-text-invert)
+  }
+}
+
+.card-image {
+  padding: 1.5rem;
+}
+
+.card {
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: scale(1.05)
+}
