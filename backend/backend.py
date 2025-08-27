@@ -4,7 +4,27 @@ from sanic import Sanic, json
 
 app = Sanic("TestApp")
 model = joblib.load("../model/finger-alphabet/asl_svm.joblib")
-labels = list(model.classes_)
+
+# wenn du "label_map.joblib" hast:
+labelmap = joblib.load("../model/finger-alphabet/label_map.joblib")
+id2label = {int(k): v for k, v in labelmap["id2label"].items()}
+labels = [id2label[i] for i in range(len(id2label))]
+
+# labels = list(model.classes_)  # fallback falls nur classes_ da ist
+
+def normalize_landmarks(lm: np.ndarray, handedness: str) -> np.ndarray:
+    if handedness.lower().startswith("left"):
+        lm[:, 0] = 1.0 - lm[:, 0]
+
+    wrist = lm[0, :3]
+    lm[:, :3] = lm[:, :3] - wrist
+
+    min_xy = lm[:, :2].min(axis=0)
+    max_xy = lm[:, :2].max(axis=0)
+    diag = float(np.linalg.norm(max_xy - min_xy)) or 1.0
+    lm[:, :3] /= diag
+
+    return lm.reshape(1, -1)
 
 @app.get("/moin")
 async def moin(request):
@@ -14,35 +34,26 @@ async def moin(request):
 async def fingers(request):
     data = request.json
     landmarks = np.array(data.get("landmarks"), dtype=np.float32)
-    handedness = data.get("handedness", "Left")  # Frontend soll 'Left'/'Right' mitsenden
-    
-    print(handedness)
- 
+    handedness = data.get("handedness", "Left")
+
     if len(landmarks) == 0:
         return json({"character": ""}, status=200)
- 
-    landmarks -= landmarks[0]
-    landmarks /= np.linalg.norm(landmarks[9]) + 1e-6
- 
-  
-    if handedness == "Right":
-        landmarks[:, 0] *= -1.0
- 
-    landmarks = landmarks.reshape((1, -1))
- 
-    probabilities = model.predict_proba(landmarks)[0]
+
+    # richtige Normalisierung
+    features = normalize_landmarks(landmarks, handedness)
+
+    probabilities = model.predict_proba(features)[0]
     idx = int(np.argmax(probabilities))
     char, prob = labels[idx], probabilities[idx]
- 
+
     print(f"Predicted: {char}, Probability: {prob:.3f}")
- 
-    if prob < 0.7:
+
+    if prob < 0.8:   # Konfidenz-Schwelle
         char = ""
- 
+
     return json({"character": char})
 
 def __main__():
-    app.run(host="localhost", port=8000)
-
+    app.run(host="localhost", port=8000, dev=True)
 if __name__ == "__main__":
     __main__()
