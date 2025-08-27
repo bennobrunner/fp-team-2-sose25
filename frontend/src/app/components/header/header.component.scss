@@ -1,0 +1,21 @@
+.logo-text {
+  color: var(--bulma-text);
+  .bold {
+    font-weight: bold;
+  }
+  .light {
+    font-weight: normal;
+    margin-bottom: 1px;
+  }
+}
+
+.logo {
+  border-right: var(--bulma-grey-lighter);
+  border-right-width: 1px;
+  border-right-style: solid;
+  padding-right: 2rem;
+}
+
+.underline {
+  text-decoration: underline;
+}
