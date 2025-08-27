@@ -1,3 +1,5 @@
+@use "bulma/sass/utilities/mixins";
+
 .logo-text {
   color: var(--bulma-text);
   .bold {
@@ -18,4 +20,25 @@
 
 .underline {
   text-decoration: underline;
+}
+
+@include mixins.touch {
+  .navbar-start {
+    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    overflow: hidden;
+    transform-origin: top center;
+    &.is-collapsed {
+      max-height: 0;
+      opacity: 0;
+      transform: scaleY(0);
+    }
+  }
+
+  /* Expanded state - full height */
+  .navbar-start {
+    max-height: 300px; /* Set to a value larger than your menu's height */
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
 }
