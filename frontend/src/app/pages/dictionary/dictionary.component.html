@@ -1,10 +1,10 @@
 
 <h1 class="title m-5">ASL Dictionary</h1>
-<div class="grid m-3">
+<div class="grid m-3 is-col-min-12">
   @for (character of allCharacters; track character) {
-    <div class="card mb-3">
-      <div class="card-image">
-        <img [src]="'letters/' + character + '.jpg'" [alt]="character" />
+    <div class="card mb-3 cell is-align-content-end">
+      <div class="card-image m-2">
+        <img [src]="'letters/' + character + '.png'" [alt]="character" />
       </div>
       <div class="card-content">
         <p class="title is-4">{{ character }}</p>
