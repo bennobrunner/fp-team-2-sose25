@@ -1,4 +1,4 @@
-import {Component, ElementRef, inject, OnInit, output, ViewChild} from '@angular/core';
+import {Component, ElementRef, OnInit, output, ViewChild} from '@angular/core';
 import { DrawingUtils, FaceLandmarker, FaceLandmarkerResult, FilesetResolver, HandLandmarker, HandLandmarkerResult } from '@mediapipe/tasks-vision'
 import { HAND_CONNECTIONS } from '@mediapipe/hands'
 import { FACEMESH_CONTOURS } from '@mediapipe/face_mesh'
@@ -30,7 +30,6 @@ export class VideoComponent implements OnInit {
   faceLandmarker?: FaceLandmarker
 
   async ngOnInit(): Promise<void> {
-
     const vision = await FilesetResolver.forVisionTasks(
       // path/to/wasm/root
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
@@ -45,14 +44,14 @@ export class VideoComponent implements OnInit {
       runningMode: 'VIDEO',
       numHands: 1
     });
-    this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
-        delegate: "GPU"
-      },
-      runningMode: 'VIDEO',
-      numFaces: 1
-    })
+    // this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+    //   baseOptions: {
+    //     modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
+    //     delegate: "GPU"
+    //   },
+    //   runningMode: 'VIDEO',
+    //   numFaces: 1
+    // })
 
     this.canvasContext = this.outCanvas.nativeElement.getContext('2d')!;
   }
@@ -75,7 +74,7 @@ export class VideoComponent implements OnInit {
 
     let lastVideoTime = -1;
     let handResults: HandLandmarkerResult;
-    let faceResults: FaceLandmarkerResult;
+    let faceResults: FaceLandmarkerResult | undefined;
 
     this.webcamRunning = true;
 
@@ -85,12 +84,12 @@ export class VideoComponent implements OnInit {
       this.outCanvas.nativeElement.width = this.videoStream.nativeElement.offsetWidth;
       this.outCanvas.nativeElement.height = this.videoStream.nativeElement.offsetHeight;
 
-
       const startTimeMs = performance.now();
-      if (lastVideoTime !== this.videoStream?.nativeElement.currentTime && this.handLandmarker && this.faceLandmarker) {
+      if (lastVideoTime !== this.videoStream?.nativeElement.currentTime && this.handLandmarker) {
         lastVideoTime = this.videoStream.nativeElement.currentTime;
         handResults = this.handLandmarker.detectForVideo(this.videoStream.nativeElement, startTimeMs);
-        faceResults = this.faceLandmarker.detectForVideo(this.videoStream.nativeElement, startTimeMs);
+        // Turning off face landmarks for now
+        // faceResults = this.faceLandmarker.detectForVideo(this.videoStream.nativeElement, startTimeMs);
       }
       // this.canvasContext.save();
       this.canvasContext.clearRect(0, 0, this.outCanvas.nativeElement.width, this.outCanvas.nativeElement.height);
@@ -111,7 +110,7 @@ export class VideoComponent implements OnInit {
           }
         }
       }
-      if (faceResults.faceLandmarks) {
+      if (faceResults?.faceLandmarks) {
         this.faceLandmarkResults.emit(faceResults);
         if (this.drawLandmarksOnCamera) {
           for (const landmarks of faceResults.faceLandmarks) {
