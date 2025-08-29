@@ -13,16 +13,6 @@
   transform: rotateY(180deg);
 }
 
-.content {
-  display: grid;
-  align-items: center;
-}
-
-.row {
-  margin: auto;
-  grid-row: auto;
-}
-
 .button {
   width: fit-content;
 }
@@ -30,4 +20,14 @@
 .subtitles {
   border: 1px solid #ccc;
   padding: 1rem;
+}
+
+.toggle-landmarks {
+  position: absolute;
+  z-index: 2;
+  top: 25px;
+  left: 25px;
+  border-radius: var(--bulma-box-radius);
+  padding: 5px;
+  cursor: pointer;
 }

@@ -1,9 +1,10 @@
-import {Component, inject} from '@angular/core';
+import {Component, DestroyRef, inject} from '@angular/core';
 import {VideoComponent} from '../../components/video/video.component';
 import {RecognizedComponent} from '../../components/recognized/recognized.component';
 import {ActualComponent} from '../../components/actual/actual.component';
 import {HandLandmarkerResult} from '@mediapipe/tasks-vision';
-import {HttpClient} from '@angular/common/http';
+import {LandmarksService} from '../../services/landmarks/landmarks.service';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-lesson',
@@ -16,40 +17,37 @@ import {HttpClient} from '@angular/common/http';
   styleUrl: './lesson.component.scss'
 })
 export class LessonComponent {
+  private landmarksService = inject(LandmarksService)
+  private destroyRef = inject(DestroyRef)
 
-  private http = inject(HttpClient)
-
-  currentLesson = 'E'
+  currentLesson = this.nextCharacter()
   recognizedCharacter = '';
 
   streak: string[] = []
 
   checkResult(result: HandLandmarkerResult) {
-    const request = result.landmarks.map(landmarks => landmarks.map(landmark => ([landmark.x, landmark.y, landmark.z]))).flat()
+    if (result.landmarks.length <= 0 && result.handedness.length <= 0) {
+      return;
+    }
 
-    this.http.post<FingerAlphabetResponse>("/api/fingers", {
-      landmarks: request,
-      handedness: result.handedness[0][0].categoryName
-    }).subscribe(res => {
-      if (res.character !== "")
-      this.recognizedCharacter = res.character
+    this.landmarksService.getCharacterPrediction(result)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(res => {
+        if (res.character !== "")
+        this.recognizedCharacter = res.character
 
-      if (this.recognizedCharacter === this.currentLesson) {
-        this.streak.push(this.recognizedCharacter)
-        this.nextLesson()
-      }
+        if (this.recognizedCharacter === this.currentLesson) {
+          this.streak.push(this.recognizedCharacter)
+          this.currentLesson = this.nextCharacter()
+        }
     })
   }
 
   skipLesson() {
-    this.nextLesson()
+    this.currentLesson = this.nextCharacter()
   }
 
-  private nextLesson() {
-    this.currentLesson = String.fromCharCode(65 + Math.floor(Math.random() * 26)) // Random character A-Z
+  private nextCharacter(): string {
+    return String.fromCharCode(65 + Math.floor(Math.random() * 26)) // Random character A-Z
   }
-}
-
-interface FingerAlphabetResponse {
-  character: string;
 }

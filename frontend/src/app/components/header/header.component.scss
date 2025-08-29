@@ -18,8 +18,8 @@
   padding-right: 2rem;
 }
 
-.underline {
-  text-decoration: underline;
+.active {
+  background: var(--bulma-grey-lighter);
 }
 
 @include mixins.touch {

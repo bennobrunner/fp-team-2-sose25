@@ -1,11 +1,14 @@
-import {Component, ElementRef, OnInit, output, ViewChild} from '@angular/core';
+import {Component, ElementRef, inject, OnInit, output, ViewChild} from '@angular/core';
 import { DrawingUtils, FaceLandmarker, FaceLandmarkerResult, FilesetResolver, HandLandmarker, HandLandmarkerResult } from '@mediapipe/tasks-vision'
 import { HAND_CONNECTIONS } from '@mediapipe/hands'
 import { FACEMESH_CONTOURS } from '@mediapipe/face_mesh'
+import {NgClass} from '@angular/common';
 
 @Component({
   selector: 'app-video',
-  imports: [],
+  imports: [
+    NgClass
+  ],
   templateUrl: './video.component.html',
   styleUrl: './video.component.scss'
 })
@@ -20,14 +23,14 @@ export class VideoComponent implements OnInit {
   handLandmarkResults  = output<HandLandmarkerResult>();
   faceLandmarkResults = output<FaceLandmarkerResult>();
 
-  runningMode = "VIDEO";
-  webcamRunning = true;
+  webcamRunning = false;
+  drawLandmarksOnCamera = false;
 
   handLandmarker?: HandLandmarker;
   faceLandmarker?: FaceLandmarker
 
   async ngOnInit(): Promise<void> {
-    console.log(await navigator.mediaDevices.enumerateDevices());
+
     const vision = await FilesetResolver.forVisionTasks(
       // path/to/wasm/root
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
@@ -56,7 +59,12 @@ export class VideoComponent implements OnInit {
 
   async enableCam() {
     const constraints: MediaStreamConstraints = {
-      video: true,
+      video: {
+        height: { ideal: 720 },
+        width: { ideal: 1280 },
+        facingMode: "user", // front camera
+        aspectRatio: { ideal: 16 / 9 }
+      },
     };
 
     // Activate the webcam stream.
@@ -69,19 +77,22 @@ export class VideoComponent implements OnInit {
     let handResults: HandLandmarkerResult;
     let faceResults: FaceLandmarkerResult;
 
+    this.webcamRunning = true;
+
     const predictWebcam = async () => {
-      this.outCanvas.nativeElement.style.width = `${this.videoStream.nativeElement.videoWidth}px`;
-      this.outCanvas.nativeElement.style.height = `${this.videoStream.nativeElement.videoHeight}px`;
-      this.outCanvas.nativeElement.width = this.videoStream.nativeElement.videoWidth;
-      this.outCanvas.nativeElement.height = this.videoStream.nativeElement.videoHeight;
+      this.outCanvas.nativeElement.style.width = `${this.videoStream.nativeElement.offsetWidth}px`;
+      this.outCanvas.nativeElement.style.height = `${this.videoStream.nativeElement.offsetHeight}px`;
+      this.outCanvas.nativeElement.width = this.videoStream.nativeElement.offsetWidth;
+      this.outCanvas.nativeElement.height = this.videoStream.nativeElement.offsetHeight;
+
 
       const startTimeMs = performance.now();
-      if (lastVideoTime !== this.videoStream?.nativeElement.currentTime) {
+      if (lastVideoTime !== this.videoStream?.nativeElement.currentTime && this.handLandmarker && this.faceLandmarker) {
         lastVideoTime = this.videoStream.nativeElement.currentTime;
-        handResults = this.handLandmarker!.detectForVideo(this.videoStream.nativeElement, startTimeMs);
-        faceResults = this.faceLandmarker!.detectForVideo(this.videoStream.nativeElement, startTimeMs);
+        handResults = this.handLandmarker.detectForVideo(this.videoStream.nativeElement, startTimeMs);
+        faceResults = this.faceLandmarker.detectForVideo(this.videoStream.nativeElement, startTimeMs);
       }
-      this.canvasContext.save();
+      // this.canvasContext.save();
       this.canvasContext.clearRect(0, 0, this.outCanvas.nativeElement.width, this.outCanvas.nativeElement.height);
 
       const drawingUtils = new DrawingUtils(this.canvasContext)
@@ -90,27 +101,30 @@ export class VideoComponent implements OnInit {
 
       if (handResults.landmarks) {
         this.handLandmarkResults.emit(handResults);
-        for (const landmarks of handResults.landmarks) {
-          console.log(landmarks);
-          drawingUtils.drawConnectors(landmarks, handConnections, {
-            color: "#00FF00",
-            lineWidth: 5
-          });
-          drawingUtils.drawLandmarks(landmarks, { color: "#FF0000", lineWidth: 2 });
+        if (this.drawLandmarksOnCamera) {
+          for (const landmarks of handResults.landmarks) {
+            drawingUtils.drawConnectors(landmarks, handConnections, {
+              color: "#00FF00",
+              lineWidth: 5
+            });
+            drawingUtils.drawLandmarks(landmarks, { color: "#FF0000", lineWidth: 2 });
+          }
         }
       }
       if (faceResults.faceLandmarks) {
         this.faceLandmarkResults.emit(faceResults);
-        for (const landmarks of faceResults.faceLandmarks) {
-          drawingUtils.drawConnectors(landmarks, faceConnections, {
-            color: "#00FF00",
-            lineWidth: 0.5
-          })
-          drawingUtils.drawLandmarks(landmarks, { color: '#FF0000', radius: 0.1 });
+        if (this.drawLandmarksOnCamera) {
+          for (const landmarks of faceResults.faceLandmarks) {
+            drawingUtils.drawConnectors(landmarks, faceConnections, {
+              color: "#00FF00",
+              lineWidth: 0.5
+            })
+            drawingUtils.drawLandmarks(landmarks, { color: '#FF0000', radius: 0.1 });
+          }
         }
       }
 
-      this.canvasContext?.restore();
+      // this.canvasContext?.restore();
       window.requestAnimationFrame(predictWebcam);
     }
   }
