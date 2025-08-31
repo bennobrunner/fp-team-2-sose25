@@ -1,2 +1,8 @@
-<app-video (handLandmarkResults)="onHandResult($event)"></app-video>
-<p>{{recognizedSentence.join()}}</p>
+<div class="columns">
+  <div class="column box is-flex is-flex-direction-column is-align-items-center">
+    <app-video (handLandmarkResults)="onHandResult($event)"></app-video>
+    <div>
+      <p class="subtitle">{{recognizedSentence.join('')}}</p>
+    </div>
+  </div>
+</div>

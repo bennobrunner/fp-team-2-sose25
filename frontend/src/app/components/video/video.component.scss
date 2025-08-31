@@ -31,3 +31,13 @@
   padding: 5px;
   cursor: pointer;
 }
+
+.enable-webcam {
+  border: none;
+  box-shadow: none;
+  transition: transform 0.2s ease-in-out;
+  &:hover {
+    background: none;
+    transform: scale(1.1);
+  }
+}

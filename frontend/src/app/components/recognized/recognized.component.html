@@ -7,12 +7,14 @@
     </div>
     <div class="columns is-centered">
       <div class="column">
-        <p>{{letterRecognized()}}</p>
+        <div>
+          <p class="title">{{letterRecognized()}}</p>
+        </div>
       </div>
     </div>
     <hr>
     <h5>Your current streak!</h5>
-    <p>
+    <p class="subtitle">
       {{streak().join(' ')}}
     </p>
   </div>

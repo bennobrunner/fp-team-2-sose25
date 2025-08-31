@@ -2,3 +2,51 @@
   max-height: 200px;
   max-width: 250px;
 }
+
+.letter {
+  min-height: 55px;
+}
+
+
+.checkmark-animation {
+  display: inline-block;
+  width: 45px;
+  height: 45px;
+  margin-left: 10px;
+  position: relative;
+  border-radius: 50%;
+  box-sizing: content-box;
+  border: 2px solid #4CAF50;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 25px;
+    height: 15px;
+    border-left: 2px solid #4CAF50;
+    border-bottom: 2px solid #4CAF50;
+    transform: translate(-50%, -60%) rotate(-45deg);
+  }
+
+  &.animate {
+    animation: checkmark-appear 1s ease forwards;
+  }
+
+  @keyframes checkmark-appear {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+  }
+}
+

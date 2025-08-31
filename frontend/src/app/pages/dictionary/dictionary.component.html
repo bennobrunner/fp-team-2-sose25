@@ -3,7 +3,7 @@
   @for (character of allCharacters; track character) {
     <div class="card mb-3 cell is-align-content-end">
       <div class="card-image m-2">
-        <img [src]="'letters/' + character + '.png'" [alt]="character" />
+        <img [src]="'letters/' + character + '.png'" [alt]="'The sign for the character ' + character.toUpperCase()" />
       </div>
       <div class="card-content">
         <p class="title is-4">{{ character }}</p>

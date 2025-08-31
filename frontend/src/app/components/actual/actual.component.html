@@ -1,14 +1,11 @@
-<div class="box">
-  <div class="columns">
-    <div class="column">
+<div class="box box-height">
       <h4 class="subtitle">The letter you are trying to sign.</h4>
-    </div>
-  </div>
-  <div class="columns">
-    <div class="column">
+    <div class="content">
       <img class="character-image" [alt]="letterToSign()" [src]="'letters/' + letterToSign() + '.png'" />
-      <p>{{letterToSign()}}</p>
+      <div class="is-flex is-align-content-center is-justify-content-start letter">
+        <p class="title mt-auto mb-auto">{{letterToSign()}}</p>
+        <span class="checkmark-animation" [ngClass]="startAnimation ? 'animate' : 'is-hidden'"></span>
+      </div>
     </div>
-  </div>
-  <button (click)="skip.emit()" class="button">Skip</button>
+  <button (click)="skip.emit()" class="button">Skip letter</button>
 </div>

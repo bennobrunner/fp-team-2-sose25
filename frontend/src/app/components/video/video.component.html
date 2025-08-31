@@ -1,10 +1,20 @@
 <div class="columns">
   <div class="column">
-    <div class="box is-block is-relative">
-      <canvas #outputCanvas class="canvas"></canvas>
-      <video class="videoBlock" #webcam autoplay playsinline></video>
-      <button class="is-flex is-align-content-center button toggle-landmarks" (click)="drawLandmarksOnCamera = !drawLandmarksOnCamera">
-        <i class="is-align-content-center is-flex">
+    <div class="box is-relative is-flex is-align-content-center is-justify-content-center">
+      <button title="Enable webcam" class="button enable-webcam" (click)="enableCam()" [ngClass]="webcamRunning ? 'is-hidden' : ''">
+        <svg height="64px" width="64px" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" xmlns:xlink="http://www.w3.org/1999/xlink" enable-background="new 0 0 512 512">
+          <g>
+            <g fill="#231F20">
+              <path d="m354.2,247.4l-135.1-92.4c-4.2-3.1-15.4-3.1-16.3,8.6v184.8c1,11.7 12.4,11.9 16.3,8.6l135.1-92.4c3.5-2.1 8.3-10.7 0-17.2zm-130.5,81.3v-145.4l106.1,72.7-106.1,72.7z"/>
+              <path d="M256,11C120.9,11,11,120.9,11,256s109.9,245,245,245s245-109.9,245-245S391.1,11,256,11z M256,480.1    C132.4,480.1,31.9,379.6,31.9,256S132.4,31.9,256,31.9S480.1,132.4,480.1,256S379.6,480.1,256,480.1z"/>
+            </g>
+          </g>
+        </svg>
+      </button>
+      <canvas #outputCanvas class="canvas" [ngClass]="webcamRunning ? '' : 'is-hidden'"></canvas>
+      <video class="videoBlock" #webcam autoplay playsinline [ngClass]="webcamRunning ? '' : 'is-hidden'"></video>
+      <button class="is-align-content-center button toggle-landmarks" [ngClass]="webcamRunning ? 'is-flex' : 'is-hidden'" (click)="drawLandmarksOnCamera = !drawLandmarksOnCamera">
+        <i class="is-align-content-center is-flex" [title]="drawLandmarksOnCamera ? 'Hide landmarks' : 'Show landmarks'">
           @if (!drawLandmarksOnCamera) {
           <svg width="32px" height="32px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg">
             <path d="M24.5857,6.5859A1.9865,1.9865,0,0,0,23.1714,6H16V2H14V6H6A2.0025,2.0025,0,0,0,4,8v6a2.0025,2.0025,0,0,0,2,2h8V30h2V16h7.1714a1.9865,1.9865,0,0,0,1.4143-.5859L29,11ZM23.1714,14H6V8H23.1716l3,3Z"/>
@@ -29,6 +39,5 @@
         </i>
       </button>
     </div>
-    <button class="button" (click)="enableCam()" [ngClass]="webcamRunning ? 'is-hidden' : ''">LOS</button>
   </div>
 </div>
