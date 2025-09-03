@@ -27,7 +27,6 @@ def normalize_landmarks(lm: np.ndarray, handedness: str) -> np.ndarray:
 
     return lm.reshape(1, -1)
 
-@app.post("/")
 @app.post("/fingers")
 async def fingers(request):
     data = request.json
