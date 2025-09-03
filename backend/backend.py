@@ -2,20 +2,23 @@ import time
 import joblib
 import numpy as np
 from sanic import Sanic, json
-from typing import Dict
+from typing import Dict, Optional, List
 
 app = Sanic("FP-Team2-Backend")
 
 # -------------------- TUNABLES --------------------
-MODEL_PATH = "data/asl_svm.joblib"    # benutze wirklich das trainierte Modell
-LABELMAP_PATH = "data/label_map.joblib"  # nur Fallback
-CONF_THRESHOLD = 0.6                   # moderater als 0.8
-PROB_EMA_ALPHA = 0.85                  # 0..1, höher = glatter (auf Probs)
-STREAK_N = 3                           # gleiche Top-1 muss N-mal in Folge auftauchen
+MODEL_PATH = "data/asl_svm.joblib"      # Pfad zu deinem Modell
+LABELMAP_PATH = "data/label_map.joblib" # nur Fallback, wenn classes_ fehlt
+CONF_THRESHOLD = 0.6
+PROB_EMA_ALPHA = 0.85
+STREAK_N = 3
+N_LM = 21
+LM_DIM = 3
+FEAT_DIM = N_LM * LM_DIM
 # --------------------------------------------------
 
-# ---------- One-Euro-Filter für Landmark-Glättung ----------
-class OneEuro:
+# ---------- One-Euro-Filter ----------
+class OneEuro(object):
     def __init__(self, freq=30.0, min_cutoff=1.2, beta=0.015, d_cutoff=1.0, dim=63):
         import math
         self.math = math
@@ -49,54 +52,90 @@ class OneEuro:
         self.freq = 1.0 / dt
         self.t_prev = t_now
 
-        # Geschwindigkeit schätzen und glätten
         dx = (x - self.x_prev) * self.freq
         ad = self._alpha(self.d_cutoff)
         dx_hat = self._sfilter(dx, self.dx_prev, ad)
 
-        # adaptiver Cutoff
         cutoff = self.min_cutoff + self.beta * np.abs(dx_hat)
         a = self._alpha(cutoff)
 
-        # eigentliche Glättung
         x_hat = self._sfilter(x, self.x_prev, a)
-
         self.x_prev = x_hat
         self.dx_prev = dx_hat
         return x_hat
-# -----------------------------------------------------------
+# ------------------------------------
 
 # Modell & Labels
 model = joblib.load(MODEL_PATH)
 if hasattr(model, "classes_"):
     LABELS = list(model.classes_)
 else:
-    # Fallback: Labelmap laden (Reihenfolge muss zu y-IDs passen!)
     lm = joblib.load(LABELMAP_PATH)
-    id2label = {int(k): v for k, v in lm["id2label"].items()}
-    LABELS = [id2label[i] for i in range(len(id2label))]
+    if isinstance(lm, dict) and "id2label" in lm:
+        id2label = {int(k): v for k, v in lm["id2label"].items()}
+        LABELS = [id2label[i] for i in range(len(id2label))]
+    else:
+        # letzter Ausweg: Keys sortieren
+        id2label = {int(k): str(v) for k, v in lm.items()}
+        LABELS = [id2label[i] for i in sorted(id2label.keys())]
 
-# Pro-Sitzung Zustand (Glättung & Stabilisierung)
-class SessionState:
+# State pro Session
+class SessionState(object):
     def __init__(self):
-        self.oef = OneEuro(dim=63)           # Landmark-Glättung
-        self.p_smooth = None                 # geglättete Probabilitäten
+        self.oef = OneEuro(dim=FEAT_DIM)
+        self.p_smooth = None
         self.prev_label = None
         self.streak = 0
 
-SESSIONS: Dict[str, SessionState] = {}
+SESSIONS = {}  # type: Dict[str, SessionState]
 
-def get_state(session_id: str) -> SessionState:
+def get_state(session_id):
     st = SESSIONS.get(session_id)
     if st is None:
         st = SessionState()
         SESSIONS[session_id] = st
     return st
 
-# ---------- Normalisierung exakt wie im Training ----------
-def normalize_landmarks(lm: np.ndarray, handedness: str) -> np.ndarray:
-    lm = np.asarray(lm, dtype=np.float32).copy()
-    if handedness and handedness.lower().startswith("left"):
+# --------- Utils ----------
+def predict_proba_safe(model, X):
+    """Gibt (n_samples, n_classes) zurück – auch wenn Modell kein predict_proba hat."""
+    if hasattr(model, "predict_proba"):
+        return model.predict_proba(X)
+    if hasattr(model, "decision_function"):
+        d = model.decision_function(X)  # (n, C) oder (n,) bei binär
+        d = np.asarray(d, dtype=np.float64)
+        if d.ndim == 1:
+            # binärer Fall -> in zwei Spalten konvertieren
+            d = np.vstack([-d, d]).T
+        # Softmax
+        d -= np.max(d, axis=1, keepdims=True)
+        e = np.exp(d)
+        p = e / np.sum(e, axis=1, keepdims=True)
+        return p.astype(np.float32)
+    # Fallback: one-hot aus predict
+    y = model.predict(X)
+    classes = list(getattr(model, "classes_", LABELS))
+    k = len(classes)
+    P = np.full((len(y), k), 1.0 / k, dtype=np.float32)
+    for i, yi in enumerate(y):
+        try:
+            idx = classes.index(yi)
+        except ValueError:
+            idx = int(yi) if isinstance(yi, (int, np.integer)) else 0
+        P[i, :] = 0.0
+        P[i, idx] = 1.0
+    return P
+
+def normalize_landmarks(lm, handedness):
+    lm = np.asarray(lm, dtype=np.float32)
+    if lm.size != FEAT_DIM:
+        lm = lm.reshape(-1, LM_DIM)
+    if lm.shape != (N_LM, LM_DIM):
+        # unförmige Eingabe -> lieber sauber abbrechen
+        raise ValueError("Landmarks müssen (21,3) sein, bekommen: %r" % (lm.shape,))
+    lm = lm.copy()
+
+    if handedness and isinstance(handedness, str) and handedness.lower().startswith("left"):
         lm[:, 0] = 1.0 - lm[:, 0]
 
     wrist = lm[0, :3]
@@ -109,78 +148,15 @@ def normalize_landmarks(lm: np.ndarray, handedness: str) -> np.ndarray:
 
     return lm.reshape(1, -1).astype(np.float32)
 
-def features_both_hands(lm: np.ndarray, handedness: str | None):
-    """Falls Handedness unsicher: beide Varianten testen und die bessere nehmen."""
+def features_both_hands(lm, handedness):
     if handedness:
         return [normalize_landmarks(lm, handedness)]
     return [normalize_landmarks(lm, "Right"),
             normalize_landmarks(lm, "Left")]
 
-# ---------- Inferenz + Stabilisierung ----------
-def infer_with_stability(state: SessionState, feats_list: list[np.ndarray]):
-    best_idx = None
+def infer_with_stability(state, feats_list):
+    # beste Handedness-Variante wählen
     best_prob = -1.0
     best_feat = None
-
-    # Wähle beste Handedness-Variante
     for feats in feats_list:
-        probs = model.predict_proba(feats)[0]
-        idx = int(np.argmax(probs))
-        if probs[idx] > best_prob:
-            best_prob = float(probs[idx])
-            best_idx = idx
-            best_feat = feats
-
-    # Landmark-Glättung (auf Featurevektor)
-    best_feat[0] = state.oef(best_feat[0])
-    probs = model.predict_proba(best_feat)[0]
-
-    # EMA auf Probabilitäten
-    if state.p_smooth is None:
-        state.p_smooth = probs
-    else:
-        state.p_smooth = PROB_EMA_ALPHA * state.p_smooth + (1.0 - PROB_EMA_ALPHA) * probs
-
-    idx = int(np.argmax(state.p_smooth))
-    conf = float(state.p_smooth[idx])
-
-    # Streak-Debounce (reduziert Flackern zwischen ähnlichen Klassen)
-    if LABELS[idx] == state.prev_label:
-        state.streak += 1
-    else:
-        state.prev_label = LABELS[idx]
-        state.streak = 1
-
-    is_stable = (state.streak >= STREAK_N)
-    char = LABELS[idx] if (conf >= CONF_THRESHOLD and is_stable) else ""
-
-    return char, conf
-
-# ----------------------- API -----------------------
-@app.post("/fingers")
-async def fingers(request):
-    try:
-        data = request.json or {}
-        lm = np.array(data.get("landmarks") or [], dtype=np.float32)
-        handedness = data.get("handedness")           # kann None sein
-        session_id = str(data.get("session_id", "global"))  # optional vom Frontend setzen
-
-        if lm.size == 0:
-            return json({"character": "", "confidence": 0.0}, status=200)
-
-        state = get_state(session_id)
-        feats_list = features_both_hands(lm, handedness)
-        char, conf = infer_with_stability(state, feats_list)
-
-        return json({"character": char, "confidence": round(conf, 3)})
-
-    except Exception as e:
-        # defensiv: lieber leise ausfallen als crasht
-        return json({"character": "", "error": str(e)}, status=200)
-
-# Uncomment, if running locally
-def __main__():
-    app.run(host="0.0.0.0", port=8080)
-
-if __name__ == "__main__":
-    __main__()
+        probs = predict_proba_safe(model, f
