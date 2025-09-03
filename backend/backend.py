@@ -7,7 +7,7 @@ from typing import Dict
 app = Sanic("FP-Team2-Backend")
 
 # -------------------- TUNABLES --------------------
-MODEL_PATH = "data/asl_xgb.joblib"    # benutze wirklich das trainierte Modell
+MODEL_PATH = "data/asl_svm.joblib"    # benutze wirklich das trainierte Modell
 LABELMAP_PATH = "data/label_map.joblib"  # nur Fallback
 CONF_THRESHOLD = 0.6                   # moderater als 0.8
 PROB_EMA_ALPHA = 0.85                  # 0..1, höher = glatter (auf Probs)
