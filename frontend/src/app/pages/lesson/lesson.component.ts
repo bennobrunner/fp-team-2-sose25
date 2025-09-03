@@ -33,7 +33,7 @@ export class LessonComponent implements OnInit {
   ngOnInit() {
     this.detections$
       .pipe(
-        throttleTime(66, undefined, { trailing: true }), // ~15 FPS
+        throttleTime(500, undefined, { trailing: true }), // ~15 FPS
         filter(res => !!res?.landmarks?.length),
         switchMap(res => this.landmarksService.getCharacterPrediction(res)),
         takeUntilDestroyed(this.destroyRef)
