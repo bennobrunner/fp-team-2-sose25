@@ -45,7 +45,7 @@ async def fingers(request):
 
     print(f"Predicted: {char}, Probability: {prob:.3f}")
 
-    if prob < 0.8:   # Konfidenz-Schwelle
+    if prob < 0.7:   # Konfidenz-Schwelle
         char = ""
 
     return json({"character": char})

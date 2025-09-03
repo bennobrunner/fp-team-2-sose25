@@ -33,18 +33,18 @@ export class LessonComponent implements OnInit {
   ngOnInit() {
     this.detections$
       .pipe(
-        throttleTime(250, undefined, { trailing: true }), // ~15 FPS
+        throttleTime(200, undefined, { trailing: true }), // ~15 FPS
         filter(res => !!res?.landmarks?.length),
         switchMap(res => this.landmarksService.getCharacterPrediction(res)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(res => {
         const ch = res.character ?? '';
+        this.recognizedCharacter = ch;
 
         // „schnelle“ Mehrheitslogik, damit nicht auf eine ewig hohe Conf gewartet wird
         this.pushChar(ch);
         if (this.countInWindow(this.currentLesson) >= this.NEED) {
-          this.recognizedCharacter = ch;
           this.streak.push(this.recognizedCharacter)
           this.currentLesson = this.nextCharacter();
           this.lastChars.length = 0; // Fenster zurücksetzen
