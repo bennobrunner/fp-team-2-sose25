@@ -12,7 +12,7 @@ export class LandmarksService {
   getCharacterPrediction(handLandmarkerResult: HandLandmarkerResult) {
     const request = handLandmarkerResult.landmarks.map(landmarks => landmarks.map(landmark => ([landmark.x, landmark.y, landmark.z]))).flat()
 
-    return this.http.post<FingerAlphabetResponse>("/api/fingers", {
+    return this.http.post<FingerAlphabetResponse>("api/fingers", {
       landmarks: request,
       handedness: handLandmarkerResult.handedness[0][0].categoryName
     })

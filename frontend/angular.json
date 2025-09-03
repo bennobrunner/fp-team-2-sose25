@@ -71,10 +71,6 @@
               "buildTarget": "fp-team2:build:development"
             }
           },
-          "options": {
-            "allowedHosts": ["localhost", "ondigitalocean.app"],
-            "proxyConfig": "src/proxy.conf.json"
-          },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
