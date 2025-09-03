@@ -1,0 +1,9 @@
+.vercel
+
+node_modules
+.angular
+.idea
+.venv
+*.iml
+*.csv
+.DS_Store
