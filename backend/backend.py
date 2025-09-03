@@ -2,11 +2,12 @@ import joblib
 import numpy as np
 from sanic import Sanic, json
 
-app = Sanic("TestApp")
-model = joblib.load("../model/finger-alphabet/asl_svm.joblib")
+app = Sanic("FP-Team2-Backend")
+
+model = joblib.load("data/asl_svm.joblib")
 
 # wenn du "label_map.joblib" hast:
-labelmap = joblib.load("../model/finger-alphabet/label_map.joblib")
+labelmap = joblib.load("data/label_map.joblib")
 id2label = {int(k): v for k, v in labelmap["id2label"].items()}
 labels = [id2label[i] for i in range(len(id2label))]
 
@@ -26,10 +27,7 @@ def normalize_landmarks(lm: np.ndarray, handedness: str) -> np.ndarray:
 
     return lm.reshape(1, -1)
 
-@app.get("/moin")
-async def moin(request):
-    return json({"message": "Moin, moin!"})
-
+@app.post("/")
 @app.post("/fingers")
 async def fingers(request):
     data = request.json
@@ -53,7 +51,8 @@ async def fingers(request):
 
     return json({"character": char})
 
+# Uncomment, if running locally
 def __main__():
-    app.run(host="localhost", port=8000, dev=True)
+    app.run(host="0.0.0.0", port=8080)
 if __name__ == "__main__":
     __main__()
