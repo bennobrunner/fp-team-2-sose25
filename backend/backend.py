@@ -4,7 +4,7 @@ from sanic import Sanic, json
 
 app = Sanic("FP-Team2-Backend")
 
-model = joblib.load("data/asl_svm.joblib")
+model = joblib.load("data/asl_xbg.joblib")
 
 # wenn du "label_map.joblib" hast:
 labelmap = joblib.load("data/label_map.joblib")
