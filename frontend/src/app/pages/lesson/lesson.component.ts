@@ -33,14 +33,14 @@ export class LessonComponent implements OnInit {
   ngOnInit() {
     this.detections$
       .pipe(
-        throttleTime(200, undefined, { trailing: true }), // ~15 FPS
+        throttleTime(200, undefined, { trailing: true }), // ~5 FPS
         filter(res => !!res?.landmarks?.length),
         switchMap(res => this.landmarksService.getCharacterPrediction(res)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(res => {
-        const ch = res.character ?? '';
-        this.recognizedCharacter = ch;
+        const ch = res.character;
+        if (ch !== '') this.recognizedCharacter = ch;
 
         // „schnelle“ Mehrheitslogik, damit nicht auf eine ewig hohe Conf gewartet wird
         this.pushChar(ch);

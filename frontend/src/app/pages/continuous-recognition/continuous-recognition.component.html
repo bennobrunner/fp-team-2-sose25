@@ -1,8 +1,8 @@
 <div class="columns">
-  <div class="column box is-flex is-flex-direction-column is-align-items-center">
+  <div class="column is-relative is-flex is-flex-direction-column is-align-items-center">
     <app-video (handLandmarkResults)="onHandResult($event)"></app-video>
-    <div>
-      <p class="subtitle">{{recognizedSentence.join('')}}</p>
+    <div class="hovering-subtitles box" [class.is-hidden]="recognizedSentence.length === 0" [class.is-flex]="recognizedSentence.length > 0">
+      <span class="subtitle">{{recognizedSentence.join('')}}</span>
     </div>
   </div>
 </div>

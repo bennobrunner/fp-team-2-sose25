@@ -1,8 +1,9 @@
-import {Component, DestroyRef, inject} from '@angular/core';
+import {Component, DestroyRef, inject, OnInit} from '@angular/core';
 import {VideoComponent} from '../../components/video/video.component';
 import {HandLandmarkerResult} from '@mediapipe/tasks-vision';
 import {LandmarksService} from '../../services/landmarks/landmarks.service';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {Subject, switchMap, throttle, throttleTime} from 'rxjs';
 
 @Component({
   selector: 'app-continuous-recognition',
@@ -12,32 +13,23 @@ import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
   templateUrl: './continuous-recognition.component.html',
   styleUrl: './continuous-recognition.component.scss'
 })
-export class ContinuousRecognitionComponent {
+export class ContinuousRecognitionComponent implements OnInit {
   private landmarksService = inject(LandmarksService)
   private destroyRef = inject(DestroyRef)
+  private detections$ = new Subject<HandLandmarkerResult>()
 
   recognizedSentence: string[] = []
   currentlyRecognized = ''
 
   private recognitionDebounce = 0
-  private readonly DEBOUNCE_TIME = 24 * 5; // 5 seconds at 24fps
+  private readonly DEBOUNCE_TIME = 5 * 2; // 3 seconds at 4 requests per second
 
-  onHandResult(event: HandLandmarkerResult) {
-    // Add SPACE if no hands are recognised for a certain amount of frames
-    if (event.landmarks.length === 0) {
-      this.recognitionDebounce += 1;
-      if (this.recognitionDebounce > this.DEBOUNCE_TIME) {
-        if (this.recognizedSentence[this.recognizedSentence.length -1] === ' ') return;
-        this.recognizedSentence.push(' ');
-        this.recognitionDebounce = 0;
-      }
-      return;
-    }
-
-    this.landmarksService.getCharacterPrediction(event)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
-      // Simple debounce logic: require the same character to be recognized for 5 seconds (at 24fps)
+  ngOnInit() {
+    this.detections$.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      throttleTime(200),
+      switchMap((res) => this.landmarksService.getCharacterPrediction(res)),
+    ).subscribe((result) => {
       if (this.currentlyRecognized === result.character && this.recognitionDebounce > this.DEBOUNCE_TIME) {
         // If DEL is recognized, remove the last character, else add the recognized character to the sentence
         if (this.currentlyRecognized === 'DEL') {
@@ -53,6 +45,20 @@ export class ContinuousRecognitionComponent {
         this.currentlyRecognized = result.character;
         this.recognitionDebounce = 0;
       }
-    })
+    });
+  }
+
+  onHandResult(event: HandLandmarkerResult) {
+    // Add SPACE if no hands are recognised for a certain amount of frames
+    if (event.landmarks.length === 0) {
+      this.recognitionDebounce += 1;
+      if (this.recognitionDebounce > this.DEBOUNCE_TIME) {
+        if (this.recognizedSentence[this.recognizedSentence.length -1] === ' ') return;
+        this.recognizedSentence.push(' ');
+        this.recognitionDebounce = 0;
+      }
+      return;
+    }
+    this.detections$.next(event)
   }
 }
