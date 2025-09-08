@@ -25,25 +25,18 @@ export class VideoComponent implements OnInit {
 
   webcamRunning = false;
   drawLandmarksOnCamera = false;
+  isFrontCamera = true; // Track which camera is active
+  mediapipeInitialised = false;
 
   handLandmarker?: HandLandmarker;
   faceLandmarker?: FaceLandmarker
+  currentStream?: MediaStream;
 
-  async ngOnInit(): Promise<void> {
-    const vision = await FilesetResolver.forVisionTasks(
-      // path/to/wasm/root
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
-    );
-
-
-    this.handLandmarker = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
-        delegate: "GPU"
-      },
-      runningMode: 'VIDEO',
-      numHands: 1
-    });
+  ngOnInit() {
+    this.refreshLandmarker().then(() => {
+      this.canvasContext = this.outCanvas.nativeElement.getContext('2d')!;
+      this.mediapipeInitialised = true;
+    })
     // this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
     //   baseOptions: {
     //     modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
@@ -52,31 +45,26 @@ export class VideoComponent implements OnInit {
     //   runningMode: 'VIDEO',
     //   numFaces: 1
     // })
-
-    this.canvasContext = this.outCanvas.nativeElement.getContext('2d')!;
   }
 
   async enableCam() {
+    // Stop any existing stream
+    if (this.webcamRunning) {
+      // this.refreshLandmarker();
+    }
+
     const constraints: MediaStreamConstraints = {
       video: {
         height: { ideal: 720 },
         width: { ideal: 1280 },
-        facingMode: "user", // front camera
+        facingMode: this.isFrontCamera ? "user" : "environment", // Set camera based on current mode
         aspectRatio: { ideal: 16 / 9 }
       },
     };
 
-    // Activate the webcam stream.
-    navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-      this.videoStream.nativeElement.srcObject = stream;
-      this.videoStream.nativeElement.addEventListener("loadeddata", predictWebcam);
-    });
-
     let lastVideoTime = -1;
     let handResults: HandLandmarkerResult;
     let faceResults: FaceLandmarkerResult | undefined;
-
-    this.webcamRunning = true;
 
     const predictWebcam = async () => {
       this.outCanvas.nativeElement.style.width = `${this.videoStream.nativeElement.offsetWidth}px`;
@@ -123,9 +111,46 @@ export class VideoComponent implements OnInit {
         }
       }
 
-      // this.canvasContext?.restore();
-      window.requestAnimationFrame(predictWebcam);
+      this.canvasContext?.restore();
+      if (this.webcamRunning) {
+        window.requestAnimationFrame(predictWebcam);
+      }
+    }
+    try {
+      // Activate the webcam stream.
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      this.currentStream = stream;
+      this.videoStream.nativeElement.srcObject = stream;
+      this.videoStream.nativeElement.addEventListener("loadeddata", predictWebcam);
+
+      this.webcamRunning = true;
+    } catch (error) {
+      console.error("Error accessing camera:", error);
     }
   }
-}
 
+  toggleCamera() {
+    this.isFrontCamera = !this.isFrontCamera;
+    if (this.webcamRunning) {
+      this.webcamRunning = false;
+      this.currentStream?.getVideoTracks().forEach(track => {track.stop()})
+      this.enableCam(); // Re-enable camera with the new settings
+    }
+  }
+
+  async refreshLandmarker() {
+    this.handLandmarker?.close();
+    const vision = await FilesetResolver.forVisionTasks(
+      // path/to/wasm/root
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+    );
+    this.handLandmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+        delegate: "GPU"
+      },
+      runningMode: 'VIDEO',
+      numHands: 1
+    });
+  }
+}

@@ -68,7 +68,8 @@
               "buildTarget": "fp-team2:build:production"
             },
             "development": {
-              "buildTarget": "fp-team2:build:development"
+              "buildTarget": "fp-team2:build:development",
+              "proxyConfig": "src/proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

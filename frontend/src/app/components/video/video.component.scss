@@ -22,11 +22,17 @@
   padding: 1rem;
 }
 
-.toggle-landmarks {
+.video-controls {
   position: absolute;
   z-index: 2;
   top: 25px;
   left: 25px;
+  display: flex;
+  gap: 10px;
+}
+
+.toggle-landmarks,
+.toggle-camera {
   border-radius: var(--bulma-box-radius);
   padding: 5px;
   cursor: pointer;

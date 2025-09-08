@@ -1,7 +1,7 @@
 <div class="columns">
   <div class="column">
     <div class="box is-relative is-flex is-align-content-center is-justify-content-center">
-      <button title="Enable webcam" class="button enable-webcam" (click)="enableCam()" [ngClass]="webcamRunning ? 'is-hidden' : ''">
+      <button title="Enable webcam" class="button enable-webcam" (click)="enableCam()" [ngClass]="webcamRunning || !mediapipeInitialised ? 'is-hidden' : ''">
         <svg height="64px" width="64px" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" xmlns:xlink="http://www.w3.org/1999/xlink" enable-background="new 0 0 512 512">
           <g>
             <g fill="#231F20">
@@ -11,33 +11,43 @@
           </g>
         </svg>
       </button>
-      <canvas #outputCanvas class="canvas" [ngClass]="webcamRunning ? '' : 'is-hidden'"></canvas>
-      <video class="videoBlock" #webcam autoplay playsinline [ngClass]="webcamRunning ? '' : 'is-hidden'"></video>
-      <button class="is-align-content-center button toggle-landmarks" [ngClass]="webcamRunning ? 'is-flex' : 'is-hidden'" (click)="drawLandmarksOnCamera = !drawLandmarksOnCamera">
-        <i class="is-align-content-center is-flex" [title]="drawLandmarksOnCamera ? 'Hide landmarks' : 'Show landmarks'">
-          @if (!drawLandmarksOnCamera) {
-          <svg width="32px" height="32px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg">
-            <path d="M24.5857,6.5859A1.9865,1.9865,0,0,0,23.1714,6H16V2H14V6H6A2.0025,2.0025,0,0,0,4,8v6a2.0025,2.0025,0,0,0,2,2h8V30h2V16h7.1714a1.9865,1.9865,0,0,0,1.4143-.5859L29,11ZM23.1714,14H6V8H23.1716l3,3Z"/>
-          </svg>
-          } @else {
-            <svg
-              width="32px"
-              height="32px"
-              viewBox="0 0 32 32"
-              id="icon"
-              version="1.1"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M 24.5857,6.5859 A 1.9865,1.9865 0 0 0 23.1714,6 H 16 V 2 H 14 V 6 H 6 A 2.0025,2.0025 0 0 0 4,8 v 6 a 2.0025,2.0025 0 0 0 2,2 h 8 v 14 h 2 V 16 h 7.1714 a 1.9865,1.9865 0 0 0 1.4143,-0.5859 L 29,11 Z M 23.1714,14 H 6 V 8 h 17.1716 l 3,3 z"
-                id="path1" />
-              <path
-                style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.6;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-                d="M 3.6923077,1.7692308 29.230769,30.692308"
-                id="path2" />
+      <canvas #outputCanvas class="canvas" [class.is-hidden]="!webcamRunning"></canvas>
+      <video class="videoBlock" #webcam autoplay playsinline [class.is-hidden]="!webcamRunning"></video>
+      <div class="is-flex video-controls">
+        <button class="button toggle-landmarks" (click)="drawLandmarksOnCamera = !drawLandmarksOnCamera"  [class.is-hidden]="!webcamRunning">
+          <i class="is-align-content-center is-flex" [title]="drawLandmarksOnCamera ? 'Hide landmarks' : 'Show landmarks'">
+            @if (!drawLandmarksOnCamera) {
+            <svg width="32px" height="32px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24.5857,6.5859A1.9865,1.9865,0,0,0,23.1714,6H16V2H14V6H6A2.0025,2.0025,0,0,0,4,8v6a2.0025,2.0025,0,0,0,2,2h8V30h2V16h7.1714a1.9865,1.9865,0,0,0,1.4143-.5859L29,11ZM23.1714,14H6V8H23.1716l3,3Z"/>
             </svg>
-          }
-        </i>
-      </button>
+            } @else {
+              <svg
+                width="32px"
+                height="32px"
+                viewBox="0 0 32 32"
+                id="icon"
+                version="1.1"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M 24.5857,6.5859 A 1.9865,1.9865 0 0 0 23.1714,6 H 16 V 2 H 14 V 6 H 6 A 2.0025,2.0025 0 0 0 4,8 v 6 a 2.0025,2.0025 0 0 0 2,2 h 8 v 14 h 2 V 16 h 7.1714 a 1.9865,1.9865 0 0 0 1.4143,-0.5859 L 29,11 Z M 23.1714,14 H 6 V 8 h 17.1716 l 3,3 z"
+                  id="path1" />
+                <path
+                  style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.6;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+                  d="M 3.6923077,1.7692308 29.230769,30.692308"
+                  id="path2" />
+              </svg>
+            }
+          </i>
+        </button>
+        <button class="button toggle-camera" (click)="toggleCamera()" title="Toggle camera"  [class.is-hidden]="!webcamRunning">
+          <i class="is-align-content-center is-flex">
+            <svg width="32px" height="32px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.99999 5.00002L7.99999 7.00002M7.99999 7.00002L9.99999 9.00002M7.99999 7.00002L14 7.00002M14 19L16 17M16 17L14 15M16 17L9.99999 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 21.8L3 15.4V8.6L11 2.2L19 8.6V15.4L11 21.8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </i>
+        </button>
+      </div>
     </div>
   </div>
 </div>
