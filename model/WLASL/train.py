@@ -24,27 +24,27 @@ N_FRAMES = 30
 FRAME_STEP = 1
 
 BATCH_SIZE = 2
-EPOCHS = 5
+EPOCHS = 100
 
 def get_class(fname):
-  """ Retrieve the name of the class given a filename.
+  """ Gibt die Klasse einer gegebenen Datei aus.
 
     Args:
-      fname: Name of the file in the dataset. Example name: 'apfel_train_0.mp4'
+      fname: Name der Datei. Beispiel: 'apfel_train_0.mp4'
 
     Returns:
-      Class that the file belongs to.
+      Klasse der Datei.
   """
   return fname.split('_')[-2]
 
 def get_files_per_class(files):
-  """ Retrieve the files that belong to each class.
+  """ Ermittelt die Dateien pro Klasse.
 
     Args:
-      files: List of files in the dataset.
+      files: Liste an Dateien.
 
     Returns:
-      Dictionary of class names (key) and files (values). 
+      Dictionary Mit Klassennamen (key) und Dateien (values). 
   """
   files_for_class = collections.defaultdict(list)
   for fname in files:
@@ -54,48 +54,42 @@ def get_files_per_class(files):
 
 def format_frames(frame, output_size):
   """
-    Pad and resize an image from a video.
+    Formatiert ein Frame, indem dieses konvertiert und skaliert wird.
 
     Args:
-      frame: Image that needs to resized and padded.
-      output_size: Pixel size of the output frame image.
+      frame: Frame zu formatieren.
+      output_size: Neue Dimensionen des Frames.
 
     Return:
-      Formatted frame with padding of specified output size.
+      Formatierter Frame.
   """
   frame = tf.image.convert_image_dtype(frame, tf.float32)
   frame = tf.image.resize_with_pad(frame, *output_size)
   return frame
 
-def frames_from_video_file(video_path, n_frames, output_size = (HEIGHT, WIDTH), frame_step = FRAME_STEP):
+def frames_from_video_file(video_path, output_size = (HEIGHT, WIDTH), frame_step = FRAME_STEP):
   """
-    Creates frames from each video file present for each category.
+    Liest ein Video, wandelt dies in eine Serie an konvertierten Frames fester Länge um.
 
     Args:
-      video_path: File path to the video.
-      n_frames: Number of frames to be created per video file.
-      output_size: Pixel size of the output frame image.
+      video_path: Videopfad.
+      output_size: Dimension eines Frames.
 
     Return:
-      An NumPy array of frames in the shape of (n_frames, height, width, channels).
+      Ein NumPy array aller Frames mit der shape (N_FRAMES, HEIGHT, WIDTH, CHANNELS).
   """
-  # Read each video frame by frame
   result = []
   src = cv2.VideoCapture(str(video_path))  
-
-  video_length = int(src.get(cv2.CAP_PROP_FRAME_COUNT))
   
   frame_idx = 0
   read_frame_idx = 0
 
-  # add first frame
   src.set(cv2.CAP_PROP_POS_FRAMES, 0)
-  # ret is a boolean indicating whether read was successful, frame is the image itself
   ret, frame = src.read()
   result.append(format_frames(frame, output_size))
   
   while frame_idx < N_FRAMES - 1:
-    # skip frame_step frames
+    # Überspringe frame_step Frames
     for _ in range(frame_step):
       ret, frame = src.read()
     
@@ -103,7 +97,7 @@ def frames_from_video_file(video_path, n_frames, output_size = (HEIGHT, WIDTH), 
       frame = format_frames(frame, output_size)
       result.append(frame)
     else:
-      # Reached end, loop back to startf
+      # Ende erreicht, loope zurück
       src.set(cv2.CAP_PROP_POS_FRAMES, 0)
       read_frame_idx = 0
       continue
@@ -118,12 +112,11 @@ def frames_from_video_file(video_path, n_frames, output_size = (HEIGHT, WIDTH), 
 
 class FrameGenerator:
   def __init__(self, path, n_frames, training = False):
-    """ Returns a set of frames with their associated label. 
+    """ Gibt ein Set von Frames mit deren entsprechenden Labels zurück. 
 
       Args:
-        path: Video file paths.
-        n_frames: Number of frames.
-        training: Boolean to determine if training dataset is being created.
+        path: Dateipfad zu den Videos eines Splits.
+        n_frames: Anzahl an Frames pro Video.
     """
     self.path = path
     self.n_frames = n_frames
@@ -163,24 +156,6 @@ train_ds = train_ds.batch(BATCH_SIZE)
 test_ds = test_ds.batch(BATCH_SIZE)
 val_ds = val_ds.batch(BATCH_SIZE)
 
-# AUTOTUNE = tf.data.AUTOTUNE
-# train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size = AUTOTUNE)
-# val_ds = val_ds.cache().shuffle(1000).prefetch(buffer_size = AUTOTUNE)
-# test_ds = test_ds.cache().shuffle(1000).prefetch(buffer_size = AUTOTUNE)
-
-# # Print the shapes of the data
-# train_frames, train_labels = next(iter(train_ds))
-# print(f'Shape of training set of frames: {train_frames.shape}')
-# print(f'Shape of training labels: {train_labels.shape}')
-
-# val_frames, val_labels = next(iter(val_ds))
-# print(f'Shape of validation set of frames: {val_frames.shape}')
-# print(f'Shape of validation labels: {val_labels.shape}')
-
-# test_frames, test_labels = next(iter(test_ds))
-# print(f'Shape of test set of frames: {test_frames.shape}')
-# print(f'Shape of test labels: {test_labels.shape}')
-
 tf.keras.backend.clear_session()
 
 backbone = movinet.Movinet(model_id = 'a0')
@@ -204,29 +179,26 @@ model.save('model.h5')
 
 def plot_history(history):
   """
-    Plotting training and validation learning curves.
+    Plotting von Training und Validation Lernkurven.
 
     Args:
-      history: model history with all the metric measures
+      history: Modell-Historie
   """
   fig, (ax1, ax2) = plt.subplots(2)
 
   fig.set_size_inches(8, 14)
 
-  # Plot loss
   ax1.set_title('Loss')
   ax1.plot(history.history['loss'], label = 'train')
   ax1.plot(history.history['val_loss'], label = 'test')
   ax1.set_ylabel('Loss')
 
-  # Determine upper bound of y-axis
   max_loss = max(history.history['loss'] + history.history['val_loss'])
 
   ax1.set_ylim([0, np.ceil(max_loss)])
   ax1.set_xlabel('Epoch')
   ax1.legend(['Train', 'Validation']) 
 
-  # Plot accuracy
   ax2.set_title('Accuracy')
   ax2.plot(history.history['accuracy'],  label = 'train')
   ax2.plot(history.history['val_accuracy'], label = 'test')
@@ -241,13 +213,13 @@ plot_history(results)
 
 def get_actual_predicted_labels(dataset): 
   """
-    Create a list of actual ground truth values and the predictions from the model.
+    Erstellt eine Liste der von Modell vorhergesagten und den tatsächlichen Werten.
 
     Args:
-      dataset: An iterable data structure, such as a TensorFlow Dataset, with features and labels.
+      dataset: Der Split, mit dem getestet wird.
 
     Return:
-      Ground truth and predicted values for a particular dataset.
+      Vorhergesagte und tatsächliche Werte.
   """
   actual = [labels for _, labels in dataset.unbatch()]
   predicted = model.predict(dataset)

@@ -8,44 +8,39 @@ from tqdm import tqdm
 
 def process_and_resize_video(video_info, output_path):
     """
-    Process a single video by extracting frames, cropping to bounding box, and resizing.
+    Verarbeitet ein Video, indem der Teil der Bounding Box ausgeschnitten und dieser dann skaliert wird.
+    Auch wird das Video nach angegebenen Start- und Endframe zugeschnitten.
     
     Args:
-        video_info (dict): Video metadata including path, bbox, frame_start, frame_end
-        output_path (pathlib.Path): Path where processed video will be saved
+        video_info: Video Metadaten, beinhaltet Pfad, Bounding Box, Start- und Endframe.
+        output_path: Pfad wo verarbeitete Videos gespeichert werden.
     
     Returns:
-        bool: True if processing was successful, False otherwise
+        bool: True wenn Verarbeitung erfolgreich, ansonsten False
     """
     try:
-        # Open input video
         cap = cv2.VideoCapture(str(video_info['path']))
         
         if not cap.isOpened():
             print(f"Error: Could not open video {video_info['path']}")
             return False
         
-        # Get video properties
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         original_fps = cap.get(cv2.CAP_PROP_FPS)
-        
-        # Use provided fps if available, otherwise use original
         fps = video_info.get('fps', original_fps)
         
-        # Determine frame range
-        frame_start = max(0, video_info['frame_start'] - 1)  # Convert to 0-based indexing
+        # Start-/Endframe ermitteln
+        frame_start = max(0, video_info['frame_start'] - 1)
         frame_end = video_info['frame_end'] if video_info['frame_end'] != -1 else total_frames
         frame_end = min(frame_end, total_frames)
         
-        # Extract bounding box coordinates
+        # Bounding Box ermitteln
         bbox = video_info['bbox']
         x_min, y_min, x_max, y_max = bbox
         
-        # Set up video writer with target dimensions
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(str(output_path), fourcc, fps, (WIDTH, HEIGHT))
         
-        # Process frames
         frame_count = 0
         processed_frames = 0
         
@@ -54,39 +49,32 @@ def process_and_resize_video(video_info, output_path):
             if not ret:
                 break
             
-            # Check if current frame is in the desired range
             if frame_count >= frame_start and frame_count < frame_end:
-                # Crop frame to bounding box
+                # Frame zu Bounding Box schneiden
                 h, w = frame.shape[:2]
                 
-                # Ensure bounding box is within frame dimensions
                 x_min_clipped = max(0, min(x_min, w))
                 y_min_clipped = max(0, min(y_min, h))
                 x_max_clipped = max(0, min(x_max, w))
                 y_max_clipped = max(0, min(y_max, h))
                 
-                # Skip if bounding box is invalid
                 if x_max_clipped <= x_min_clipped or y_max_clipped <= y_min_clipped:
                     print(f"Warning: Invalid bounding box for {video_info['path']}")
                     frame_count += 1
                     continue
                 
                 cropped_frame = frame[y_min_clipped:y_max_clipped, x_min_clipped:x_max_clipped]
-                
-                # Resize the cropped frame to target dimensions
                 resized_frame = cv2.resize(cropped_frame, (WIDTH, HEIGHT))
                 
-                # Write the processed frame
                 out.write(resized_frame)
                 processed_frames += 1
             
             frame_count += 1
             
-            # Break if we've processed all needed frames
+            # Stop wenn alle zu verarbeitenden Frames verarbeitet wurden
             if frame_count >= frame_end:
                 break
         
-        # Release resources
         cap.release()
         out.release()
         
@@ -135,23 +123,21 @@ def main():
                 
             class_count += 1
     
-    # Process each video
     successful = 0
     failed = 0
 
     for video_id, video_info in tqdm(videos.items(), desc="Processing videos"):
         path = DATA_DIR / f"{video_info["split"]}/{video_info["gloss"]}"
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
-        # Create output filename identical to original
+        # Dateipfad entsprechend der im Modell erwarteten Namensstruktur erstellen
         output_filename = f"{video_info["gloss"]}_{video_info["split"]}_{video_id}.mp4"
         output_path = path / output_filename
         
-        # Skip if already processed
+        # Überspringe wenn Datei bereits existiert, kein unnötiges Verarbeiten von Videos
         if output_path.exists():
             print(f"Skipping {output_filename} - already exists")
             continue
         
-        # Process the video
         if process_and_resize_video(video_info, output_path):
             successful += 1
         else:
